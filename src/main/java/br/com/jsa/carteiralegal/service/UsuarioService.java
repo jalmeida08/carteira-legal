@@ -2,7 +2,9 @@ package br.com.jsa.carteiralegal.service;
 
 import br.com.jsa.carteiralegal.Util;
 import br.com.jsa.carteiralegal.config.JwtTokenUtil;
+import br.com.jsa.carteiralegal.model.Pessoa;
 import br.com.jsa.carteiralegal.model.Usuario;
+import br.com.jsa.carteiralegal.repository.PessoaRepository;
 import br.com.jsa.carteiralegal.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
@@ -21,6 +23,12 @@ public class UsuarioService implements UserDetailsService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PessoaRepository pessoaRepository;
+
+    @Autowired
+    private MensageriaService mensageriaService;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -50,23 +58,26 @@ public class UsuarioService implements UserDetailsService {
 
     public Usuario entrarCarteiraLegal(Usuario usuario) {
         Optional<Usuario> u = usuarioRepository.findByEmail(usuario.getEmail());
-        verificarpresencausuario( u, "Esse e-mail já esta cadastrado");
+        verificarPresencaDadoRetornado( u, "Esse e-mail já esta cadastrado");
+        Optional<Pessoa> p = pessoaRepository.findByNumCpf(usuario.getPessoa().getNumCpf());
+        verificarPresencaDadoRetornado(p, "Essa número de CPF já está cadastrado no sistema");
+        pessoaRepository.save(usuario.getPessoa());
         Usuario u2 = usuarioRepository.save(usuario);
-        return gerarChaveAtivacaoUsuario(u2.getId());
+        return gerarChaveAtivacaoUsuario(u2);
     }
 
     public Usuario buscarUsuarioChaveAtivacao(String chaveAtivacao){
         Optional<Usuario> u = usuarioRepository.findByChaveAtivacao(chaveAtivacao);
-        verificarpresencausuario(u, "Chave de ativacao inválida");
+        verificarPresencaDadoRetornado(u, "Chave de ativacao inválida");
         return u.get();
     }
 
     public Usuario finilizarCadastroUsuario(Usuario usuario){
         Optional<Usuario> u = null;
         u = usuarioRepository.findByUsuario(usuario.getUsuario());
-        verificarpresencausuario(u, "Já existe esse usuário na base de dados.");
+        verificarPresencaDadoRetornado(u, "Já existe esse usuário na base de dados.");
         u = usuarioRepository.findByEmail(usuario.getEmail());
-        verificarpresencausuario(u, "E-mail não localizado no sistema.");
+        verificarPresencaDadoRetornado(u, "E-mail não localizado no sistema.");
 
         usuario.setId(u.get().getId());
         String senha = BCrypt.hashpw(usuario.getSenha(), BCrypt.gensalt());
@@ -77,9 +88,9 @@ public class UsuarioService implements UserDetailsService {
         return loginAutomaticoViaSistema(user);
     }
 
-    private void verificarpresencausuario(Optional<Usuario> u, String mensagemErroUsuarioNaoPresente) {
+    private void verificarPresencaDadoRetornado(Optional<?> u, String mensagemErroDadoNaoPresente) {
         if(u.isPresent()){
-            throw new RuntimeException(mensagemErroUsuarioNaoPresente);
+            throw new RuntimeException(mensagemErroDadoNaoPresente);
         }
     }
 
@@ -93,15 +104,10 @@ public class UsuarioService implements UserDetailsService {
         return user;
     }
 
-    private Usuario gerarChaveAtivacaoUsuario(Long id){
-        Optional<Usuario> u = usuarioRepository.findById(id);
-        if(u.isPresent()){
-            Usuario usuario = u.get();
-            usuario.setChaveAtivacao(Util.criptografar(usuario.getId().toString()));
-            usuarioRepository.save(usuario);
-            return usuario;
-        }else{
-            throw new RuntimeException("Não foi possível localizar o usuario");
-        }
+    private Usuario gerarChaveAtivacaoUsuario(Usuario usuario){
+        usuario.setChaveAtivacao(Util.criptografar(usuario.getId().toString()));
+        usuarioRepository.save(usuario);
+        mensageriaService.enviarEmailNovoUsuario(usuario.getEmail(), usuario.getPessoa().getNome(), usuario.getChaveAtivacao());
+        return usuario;
     }
 }
