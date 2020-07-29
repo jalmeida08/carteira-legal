@@ -1,5 +1,7 @@
 package br.com.jsa.carteiralegal.controller;
 
+import br.com.jsa.carteiralegal.exception.pessoa.NumCpfJaCadastradoException;
+import br.com.jsa.carteiralegal.exception.usuario.EmailJaCadastradoException;
 import br.com.jsa.carteiralegal.model.Usuario;
 import br.com.jsa.carteiralegal.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +24,15 @@ public class AreaPublicaController {
 
     @PostMapping("/entrar-carteira-legal")
     public ResponseEntity<?> entrarCarteiraLegal(@RequestBody Usuario usuario) {
-        Usuario u = usuarioService.entrarCarteiraLegal(usuario);
-        return ResponseEntity.ok(u);
+
+        try {
+            Usuario u = usuarioService.entrarCarteiraLegal(usuario);
+            return ResponseEntity.ok(u);
+        } catch (EmailJaCadastradoException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (NumCpfJaCadastradoException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping("/login")

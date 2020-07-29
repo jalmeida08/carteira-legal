@@ -2,6 +2,10 @@ package br.com.jsa.carteiralegal.service;
 
 import br.com.jsa.carteiralegal.Util;
 import br.com.jsa.carteiralegal.config.JwtTokenUtil;
+import br.com.jsa.carteiralegal.exception.DadoDuplicadoException;
+import br.com.jsa.carteiralegal.exception.DadoInexistenteException;
+import br.com.jsa.carteiralegal.exception.pessoa.NumCpfJaCadastradoException;
+import br.com.jsa.carteiralegal.exception.usuario.EmailJaCadastradoException;
 import br.com.jsa.carteiralegal.model.Pessoa;
 import br.com.jsa.carteiralegal.model.Usuario;
 import br.com.jsa.carteiralegal.repository.PessoaRepository;
@@ -56,28 +60,33 @@ public class UsuarioService implements UserDetailsService {
         return new User(user.getUsuario(), user.getSenha(), new ArrayList<>());
     }
 
-    public Usuario entrarCarteiraLegal(Usuario usuario) {
+    public Usuario entrarCarteiraLegal(Usuario usuario) throws EmailJaCadastradoException, NumCpfJaCadastradoException {
+
         Optional<Usuario> u = usuarioRepository.findByEmail(usuario.getEmail());
-        verificarPresencaDadoRetornado( u, "Esse e-mail já esta cadastrado");
+        if(u.isPresent()) throw new EmailJaCadastradoException();
+
         Optional<Pessoa> p = pessoaRepository.findByNumCpf(usuario.getPessoa().getNumCpf());
-        verificarPresencaDadoRetornado(p, "Essa número de CPF já está cadastrado no sistema");
+        if(p.isPresent()) throw new NumCpfJaCadastradoException();
+
         pessoaRepository.save(usuario.getPessoa());
         Usuario u2 = usuarioRepository.save(usuario);
         return gerarChaveAtivacaoUsuario(u2);
     }
 
-    public Usuario buscarUsuarioChaveAtivacao(String chaveAtivacao){
+    public Usuario buscarUsuarioChaveAtivacao(String chaveAtivacao) throws DadoInexistenteException {
         Optional<Usuario> u = usuarioRepository.findByChaveAtivacao(chaveAtivacao);
-        verificarPresencaDadoRetornado(u, "Chave de ativacao inválida");
+        if(u.isPresent()) throw new DadoInexistenteException("Chave de ativação");
         return u.get();
     }
 
-    public Usuario finilizarCadastroUsuario(Usuario usuario){
+    public Usuario finilizarCadastroUsuario(Usuario usuario) throws DadoDuplicadoException, DadoInexistenteException {
         Optional<Usuario> u = null;
+
         u = usuarioRepository.findByUsuario(usuario.getUsuario());
-        verificarPresencaDadoRetornado(u, "Já existe esse usuário na base de dados.");
+        if(u.isPresent()) throw new DadoDuplicadoException("E-mail");
+
         u = usuarioRepository.findByEmail(usuario.getEmail());
-        verificarPresencaDadoRetornado(u, "E-mail não localizado no sistema.");
+        if(u.isPresent()) throw new DadoInexistenteException("E-mail");
 
         usuario.setId(u.get().getId());
         String senha = BCrypt.hashpw(usuario.getSenha(), BCrypt.gensalt());
@@ -88,11 +97,7 @@ public class UsuarioService implements UserDetailsService {
         return loginAutomaticoViaSistema(user);
     }
 
-    private void verificarPresencaDadoRetornado(Optional<?> u, String mensagemErroDadoNaoPresente) {
-        if(u.isPresent()){
-            throw new RuntimeException(mensagemErroDadoNaoPresente);
-        }
-    }
+
 
     private Usuario loginAutomaticoViaSistema(Usuario user) {
         UserDetails userDetails = new User(user.getUsuario(), user.getSenha(), new ArrayList<>());

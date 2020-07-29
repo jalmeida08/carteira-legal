@@ -16,6 +16,7 @@ public class Pessoa implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="id")
     private Long id;
     @OneToOne(mappedBy = "pessoa")
     private Usuario usuario;
