@@ -1,10 +1,20 @@
 package br.com.jsa.carteiralegal;
 
+import br.com.jsa.carteiralegal.config.JwtTokenUtil;
+import br.com.jsa.carteiralegal.exception.SessaoInexistenteException;
+import br.com.jsa.carteiralegal.model.Usuario;
+import br.com.jsa.carteiralegal.repository.UsuarioRepository;
+import br.com.jsa.carteiralegal.service.UsuarioService;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 
 public class Util {
+
 
     public static String criptografar(String texto) {
         MessageDigest algorithm = null;
@@ -21,4 +31,5 @@ public class Util {
             throw new RuntimeException(e.getMessage());
         }
     }
+
 }

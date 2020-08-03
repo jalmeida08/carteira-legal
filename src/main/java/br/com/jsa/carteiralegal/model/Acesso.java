@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "acesso")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
+@JsonIdentityInfo(scope = Acesso.class,generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Acesso implements Serializable {
 
     private static final long serialVersionUID = -7746777019140234310L;

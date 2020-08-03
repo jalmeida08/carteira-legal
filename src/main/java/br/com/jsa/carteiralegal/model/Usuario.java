@@ -2,6 +2,7 @@ package br.com.jsa.carteiralegal.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import sun.reflect.generics.scope.MethodScope;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -10,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity(name = "usuario")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
+@JsonIdentityInfo(scope = Usuario.class, generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Usuario implements Serializable {
 
     private static final long serialVersionUID = 5556490826941567882L;

@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity(name = "despesa")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
+@JsonIdentityInfo(scope = Despesa.class,generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Despesa implements Serializable {
 
     private static final long serialVersionUID = 3359511520676372636L;
@@ -36,6 +36,7 @@ public class Despesa implements Serializable {
     @Column(name = "data_referencia")
     @Temporal(TemporalType.DATE)
     private Date dataReferencia;
+    private double valor;
     private boolean ativo;
     @Version
     private Long versao;
@@ -98,6 +99,14 @@ public class Despesa implements Serializable {
 
     public Date getDataReferencia() {
         return dataReferencia;
+    }
+
+    public double getValor() {
+        return valor;
+    }
+
+    public void setValor(double valor) {
+        this.valor = valor;
     }
 
     public void setDataReferencia(Date dataReferencia) {

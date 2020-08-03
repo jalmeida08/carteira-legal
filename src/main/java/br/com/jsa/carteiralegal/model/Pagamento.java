@@ -1,6 +1,7 @@
 package br.com.jsa.carteiralegal.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -9,7 +10,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 @Entity(name = "pagamento")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
+@JsonIdentityInfo(scope = Pagamento.class,generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Pagamento implements Serializable {
 
     private static final long serialVersionUID = 3053928899496135328L;
@@ -18,6 +19,7 @@ public class Pagamento implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne
+    @JsonIgnore
     private Pessoa pessoa;
     @Column(length = 100)
     private String titulo;

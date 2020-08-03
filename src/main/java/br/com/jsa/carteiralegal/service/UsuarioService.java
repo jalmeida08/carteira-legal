@@ -4,6 +4,7 @@ import br.com.jsa.carteiralegal.Util;
 import br.com.jsa.carteiralegal.config.JwtTokenUtil;
 import br.com.jsa.carteiralegal.exception.DadoDuplicadoException;
 import br.com.jsa.carteiralegal.exception.DadoInexistenteException;
+import br.com.jsa.carteiralegal.exception.SessaoInexistenteException;
 import br.com.jsa.carteiralegal.exception.pessoa.NumCpfJaCadastradoException;
 import br.com.jsa.carteiralegal.exception.usuario.EmailJaCadastradoException;
 import br.com.jsa.carteiralegal.model.Pessoa;
@@ -46,7 +47,7 @@ public class UsuarioService implements UserDetailsService {
         Usuario findByUsuario = usuarioRepository.findByUsuario(usuario.getUsuario()).get();
         if(findByUsuario != null) {
             if(usuario.getUsuario().equals(findByUsuario.getUsuario()) && BCrypt.checkpw(usuario.getSenha(), findByUsuario.getSenha())) {
-                return new User(findByUsuario.getUsuario(), findByUsuario.getSenha(), new ArrayList<>());
+                return new User(findByUsuario.getUsuario(), usuario.getSenha(), new ArrayList<>());
             } else {
                 throw new RuntimeException("Senha inválida.");
             }
@@ -75,7 +76,7 @@ public class UsuarioService implements UserDetailsService {
 
     public Usuario buscarUsuarioChaveAtivacao(String chaveAtivacao) throws DadoInexistenteException {
         Optional<Usuario> u = usuarioRepository.findByChaveAtivacao(chaveAtivacao);
-        if(u.isPresent()) throw new DadoInexistenteException("Chave de ativação");
+        if(!u.isPresent()) throw new DadoInexistenteException("Chave de ativação");
         return u.get();
     }
 
@@ -83,30 +84,29 @@ public class UsuarioService implements UserDetailsService {
         Optional<Usuario> u = null;
 
         u = usuarioRepository.findByUsuario(usuario.getUsuario());
-        if(u.isPresent()) throw new DadoDuplicadoException("E-mail");
+        if(u.isPresent()) throw new DadoDuplicadoException("Usuário");
 
-        u = usuarioRepository.findByEmail(usuario.getEmail());
-        if(u.isPresent()) throw new DadoInexistenteException("E-mail");
+        u = usuarioRepository.findByChaveAtivacao(usuario.getChaveAtivacao());
+        if(!u.isPresent()) throw new DadoInexistenteException("Chave de ativação");
 
-        usuario.setId(u.get().getId());
+        Usuario userASerSalvo = u.get();
         String senha = BCrypt.hashpw(usuario.getSenha(), BCrypt.gensalt());
-        usuario.setSenha(senha);
-        usuario.setAtivo(false);
-        usuario.setChaveAtivacao("");
-        Usuario user = usuarioRepository.save(usuario);
-        return loginAutomaticoViaSistema(user);
+        userASerSalvo.setSenha(senha);
+        userASerSalvo.setAtivo(false);
+        userASerSalvo.setUsuario(usuario.getUsuario());
+        userASerSalvo.setChaveAtivacao("");
+        Usuario user = usuarioRepository.save(userASerSalvo);
+        return loginAutomaticoViaSistema(user, usuario.getSenha());
     }
 
-
-
-    private Usuario loginAutomaticoViaSistema(Usuario user) {
-        UserDetails userDetails = new User(user.getUsuario(), user.getSenha(), new ArrayList<>());
+    private Usuario loginAutomaticoViaSistema(Usuario user, String senha) {
+        UserDetails userDetails = new User(user.getUsuario(), senha, new ArrayList<>());
         user.setToken(jwtTokenUtil.generateToken(userDetails));
-        user.setSenha("");
         user.setUltimoLogin(new Date());
-        user.setAtivo(true);
-        usuarioRepository.save(user);
-        return user;
+        if(!user.isAtivo()) user.setAtivo(true);
+        Usuario u = usuarioRepository.save(user);
+        u.setSenha("");
+        return u;
     }
 
     private Usuario gerarChaveAtivacaoUsuario(Usuario usuario){
@@ -114,5 +114,19 @@ public class UsuarioService implements UserDetailsService {
         usuarioRepository.save(usuario);
         mensageriaService.enviarEmailNovoUsuario(usuario.getEmail(), usuario.getPessoa().getNome(), usuario.getChaveAtivacao());
         return usuario;
+    }
+
+    public Usuario buscarDadosUsuario(String usuario) {
+        return usuarioRepository.findByUsuario(usuario).get();
+    }
+
+    public void verificarUsuarioRequisicao(Long idUsuario, String tokenUsuario) throws SessaoInexistenteException {
+        String usuario = jwtTokenUtil.getUsernameFromToken(tokenUsuario);
+        if(usuario.isEmpty())
+            throw new SessaoInexistenteException();
+        Usuario userLogado = this.buscarDadosUsuario(usuario);
+
+        if(userLogado.getId() != idUsuario)
+            throw new SessaoInexistenteException();
     }
 }

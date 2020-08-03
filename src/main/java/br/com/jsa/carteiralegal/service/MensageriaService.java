@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 public class MensageriaService {
 
 	@Autowired private JavaMailSender mailSender;
-	private final String linkBaseAtivacao = "http://localhost:4200";
+	private final String linkBaseAtivacao = "http://192.168.0.9:4200";
 	
 	private boolean enviarEmail(String destinatario, String tituloEmail, String textoEmail) {
 		
@@ -31,7 +31,7 @@ public class MensageriaService {
 
 	public void enviarEmailNovoUsuario(String destinatario, String nome, String chaveAtivacao){
 		final String tituloEmail = "Bem Vindo ao Carteira Legal";
-		String linkParaAtivarUsuario = linkBaseAtivacao + "/area-comum/confirm/atv";
+		String linkParaAtivarUsuario = linkBaseAtivacao + "/ativar-conta-carteira-legal/atv";
 		linkParaAtivarUsuario += chaveAtivacao;
 		String textoEmail = "<html> <head>"
 		+ "<style>"
