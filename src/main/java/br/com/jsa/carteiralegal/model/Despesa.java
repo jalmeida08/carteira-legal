@@ -1,6 +1,7 @@
 package br.com.jsa.carteiralegal.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
@@ -21,6 +22,7 @@ public class Despesa implements Serializable {
     @ManyToMany
     @JoinTable(name = "pessoa_despesa")
     @JoinColumn(name="pessoa_id")
+    @JsonIgnore
     private List<Pessoa> pessoa = new ArrayList<Pessoa>();
     @Column(length = 100)
     private String titulo;
