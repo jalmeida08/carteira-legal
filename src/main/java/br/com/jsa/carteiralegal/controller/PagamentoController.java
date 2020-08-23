@@ -1,5 +1,6 @@
 package br.com.jsa.carteiralegal.controller;
 
+import br.com.jsa.carteiralegal.exception.DadoInexistenteException;
 import br.com.jsa.carteiralegal.exception.SessaoInexistenteException;
 import br.com.jsa.carteiralegal.model.Pagamento;
 import br.com.jsa.carteiralegal.service.PagamentoService;
@@ -43,4 +44,33 @@ public class PagamentoController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getPagamento(@PathVariable("id") Long id){
+        try{
+            Pagamento p = pagamentoService.getPagamento(id);
+            return ResponseEntity.ok(p);
+        }catch (DadoInexistenteException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletarPagamento(@PathVariable("id") Long id){
+        try{
+            pagamentoService.remover(id);
+            return ResponseEntity.ok().build();
+        }catch (DadoInexistenteException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("atualizar")
+    public ResponseEntity<?> atualizarDespesa(@RequestBody Pagamento pagamento){
+        try{
+            pagamentoService.atualizarPagamento(pagamento);
+            return ResponseEntity.ok().build();
+        }catch (DadoInexistenteException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

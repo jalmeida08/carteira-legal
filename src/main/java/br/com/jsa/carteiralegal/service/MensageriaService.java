@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 public class MensageriaService {
 
 	@Autowired private JavaMailSender mailSender;
-	private final String linkBaseAtivacao = "http://192.168.0.9:4200";
+	private final String linkBaseAtivacao = "http://192.168.0.10:4200";
 	
 	private boolean enviarEmail(String destinatario, String tituloEmail, String textoEmail) {
 		
